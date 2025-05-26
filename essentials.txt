@@ -1,0 +1,2 @@
+python -m pip install "pymongo[srv]"
+mongodb+srv://imbsg:<db_password>@cluster0.ryte5cz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0

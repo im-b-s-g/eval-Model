@@ -1,44 +1,40 @@
 import numpy as np
 import joblib
 from tensorflow import keras
+import pickle
+import joblib
+import numpy as np
+import tensorflow as tf
 
-# Load the trained model
-model = keras.models.load_model("./Evaluation model/mbti_model.h5")
-print("Model loaded successfully!")
 
-# Load the saved scaler
-scaler = joblib.load("scaler.pkl")
-print("Scaler loaded successfully!")
+def calculate_type(avg_scores):
 
-# Define the Big Five personality traits
-traits = ['Openness', 'Conscientiousness',
-          'Extraversion', 'Agreeableness', 'Neuroticism']
+    # Load the trained model
+    model = tf.keras.models.load_model("mbti_predictor.h5")
 
-# Get user input for each trait
-input_values = []
-print("Enter the Big 5 trait values (0.0 to 1.0):")
-for trait in traits:
-    try:
-        value = float(input(f"{trait}: "))
-        input_values.append(value)
-    except ValueError:
-        print(f"Invalid input for {trait}. Please enter a numeric value.")
-        exit()
+    # Load the label encoder
+    with open("label_encoder.pkl", "rb") as f:
+        label_encoder = pickle.load(f)
 
-# Convert input list to NumPy array and reshape for a single sample
-input_array = np.array(input_values).reshape(1, -1)
+    # Load the scaler
+    scaler_value = joblib.load("scaler.pkl")  # Should be 50.0
 
-# Scale the input using the same scaler from training
-input_array_scaled = scaler.transform(input_array)
+    # Example Prediction
+    example_input = avg_scores
+    # Convert to NumPy array before division
 
-# Predict using the trained model
-predicted_probs = model.predict(input_array_scaled)
+    # example_input_normalized = np.array(example_input) / scaler_value
+    # Convert list to NumPy array and reshape it to (1, 5)
+    # example_input_normalized = np.array(
+    #     avg_scores).reshape(1, 5) / scaler_value
+    example_input = np.array([[0, 0, 0, 0, 0]])
+    for i in range(5):
+        example_input[0][i] = avg_scores[i]
+    # example_input_normalized = example_input / scaler_value  # Normalize
 
-# Get the class with the highest probability
-predicted_class = np.argmax(predicted_probs, axis=1)
+    prediction = model.predict(example_input)
+    predicted_label = np.argmax(prediction)
+    predicted_mbti = label_encoder.inverse_transform([predicted_label])
 
-# Load label encoder and decode the predicted class index
-label_encoder = joblib.load("label_encoder.pkl")
-predicted_mbti = label_encoder.inverse_transform(predicted_class)
-
-print("Predicted MBTI type:", predicted_mbti[0])
+    print(f"Predicted MBTI Type: {predicted_mbti[0]}")
+    return predicted_mbti[0]
